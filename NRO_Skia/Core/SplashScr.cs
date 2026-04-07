@@ -32,8 +32,8 @@ public class SplashScr : mScreen
         Rms.saveRMSString("acc", "Nguyễn Đạt");
         Rms.saveRMSString("pass", "check con cec");
 
-        Rms.saveRMSString("acc", "0989319946");
-        Rms.saveRMSString("pass", "dungcheckacc0");
+        //Rms.saveRMSString("acc", "0989319946");
+        //Rms.saveRMSString("pass", "dungcheckacc0");
     }
 
     public override void update()

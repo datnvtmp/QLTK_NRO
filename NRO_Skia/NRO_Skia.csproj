@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net10.0</TargetFramework>
+		<TargetFramework>net8.0-windows</TargetFramework>
 		<Nullable>disable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -32,8 +32,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="SkiaSharp" Version="3.119.2" />
-		<PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.119.2" />
+		<PackageReference Include="SkiaSharp" Version="2.88.9" />
+		<PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="2.88.9" />
 	</ItemGroup>
 
 	<Target Name="RemoveNativePdb" AfterTargets="Publish">

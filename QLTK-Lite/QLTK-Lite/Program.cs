@@ -1,4 +1,5 @@
-﻿using System;
+using System.Net;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,6 +15,9 @@ namespace QLTK_Lite
         [STAThread]
         static async Task Main()
         {
+            // Ép buộc dùng TLS 1.2 để Update hoạt động trên Windows 8
+            ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             if (!await License.CheckAsync()) return;

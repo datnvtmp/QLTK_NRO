@@ -64,13 +64,13 @@ public class GameLoop
 
         if (_sleeping)
         {
-            using var paint = new SKPaint { Color = SKColors.White, IsAntialias = true };
+            using var paint = new SKPaint { Color = SKColors.White, IsAntialias = true, TextAlign = SKTextAlign.Center };
             using var font1 = new SKFont(SKTypeface.FromFamilyName("Consolas"), 14);
             using var font2 = new SKFont(SKTypeface.FromFamilyName("Consolas"), 11);
             float cx = _width / 2f, cy = _height / 2f;
-            skCanvas.DrawText("[ SLEEP ]", cx, cy - 10, SKTextAlign.Center, font1, paint);
+            skCanvas.DrawText("[ SLEEP ]", cx, cy - 10, font1, paint);
             paint.Color = SKColors.Gray;
-            skCanvas.DrawText("Ấn [ \\ ] hoặc click để tiếp tục", cx, cy + 12, SKTextAlign.Center, font2, paint);
+            skCanvas.DrawText("Ấn [ \\ ] hoặc click để tiếp tục", cx, cy + 12, font2, paint);
             return;
         }
 
