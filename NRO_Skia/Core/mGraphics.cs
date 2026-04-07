@@ -244,7 +244,9 @@ public class mGraphics
     public void _drawRegion(Image image, float x0, float y0, int w, int h,
                             int transform, int x, int y, int anchor)
     {
-        if (canvas == null || image?.bitmap == null) return;
+        if (canvas == null || image == null) return;
+        var skImage = image.GetSkImage();
+        if (skImage == null) return;
 
         int dx = x * zoomLevel + translateX;
         int dy = y * zoomLevel + translateY;
@@ -269,7 +271,7 @@ public class mGraphics
         if (isClip) canvas.ClipRect(GetClipSKRect());
         if (transform != 0) ApplyTransform(transform, dx + dw / 2f, dy + dh / 2f);
         _paint.Style = SKPaintStyle.Fill;
-        canvas.DrawBitmap(image.bitmap, src, dst, _paint);
+        canvas.DrawImage(skImage, src, dst, _paint);
         canvas.Restore();
     }
 
@@ -279,7 +281,9 @@ public class mGraphics
     public void __drawRegion(Image image, int x0, int y0, int w, int h,
                              int transform, float x, float y, int anchor)
     {
-        if (canvas == null || image?.bitmap == null) return;
+        if (canvas == null || image == null) return;
+        var skImage = image.GetSkImage();
+        if (skImage == null) return;
 
         float dx = x * zoomLevel + translateX;
         float dy = y * zoomLevel + translateY;
@@ -304,7 +308,7 @@ public class mGraphics
         if (isClip) canvas.ClipRect(GetClipSKRect());
         if (transform != 0) ApplyTransform(transform, dx + dw / 2f, dy + dh / 2f);
         _paint.Style = SKPaintStyle.Fill;
-        canvas.DrawBitmap(image.bitmap, src, dst, _paint);
+        canvas.DrawImage(skImage, src, dst, _paint);
         canvas.Restore();
     }
 
@@ -314,7 +318,9 @@ public class mGraphics
     public void drawRegion2(Image image, float x0, float y0, int w, int h,
                             int transform, int x, int y, int anchor)
     {
-        if (canvas == null || image?.bitmap == null) return;
+        if (canvas == null || image == null) return;
+        var skImage = image.GetSkImage();
+        if (skImage == null) return;
 
         int dx = x * zoomLevel + translateX;
         int dy = y * zoomLevel + translateY;
@@ -349,7 +355,7 @@ public class mGraphics
         canvas.Save();
         if (isClip) canvas.ClipRect(GetClipSKRect());
         if (transform != 0) ApplyTransform(transform, dx + dw / 2f, dy + dh / 2f);
-        canvas.DrawBitmap(image.bitmap, src, dst, _paint);
+        canvas.DrawImage(skImage, src, dst, _paint);
         canvas.Restore();
         _paint.ColorFilter = null;
     }
@@ -387,10 +393,12 @@ public class mGraphics
 
     public void drawImagaByDrawTexture(Image image, float x, float y)
     {
-        if (canvas == null || image?.bitmap == null) return;
+        if (canvas == null || image == null) return;
+        var skImage = image.GetSkImage();
+        if (skImage == null) return;
         float px = x * zoomLevel + translateX;
         float py = y * zoomLevel + translateY;
-        canvas.DrawBitmap(image.bitmap, px, py, _paint);
+        canvas.DrawImage(skImage, px, py, _paint);
     }
 
     public void drawImageScale(Image image, int x, int y, int w, int h, int transform)

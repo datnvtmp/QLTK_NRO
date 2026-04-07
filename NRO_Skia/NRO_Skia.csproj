@@ -36,6 +36,10 @@
 		<PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="2.88.9" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<Compile Remove="BenchmarkSuite1\**\*.cs" />
+	</ItemGroup>
+
 	<Target Name="RemoveNativePdb" AfterTargets="Publish">
 		<ItemGroup>
 			<FilesToDelete Include="$(PublishDir)**\*.pdb" />

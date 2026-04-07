@@ -146,7 +146,6 @@ namespace QLTK_Lite
                         JsonConvert.SerializeObject(acc.BossConfig));
 
                 Logger.Log($"Đã lưu boss config cho {selectedAccs.Count} tài khoản.");
-                MessageBox.Show($"Đã lưu boss config cho {selectedAccs.Count} tài khoản!", "OK");
             };
 
             tab.Controls.Add(btnSave);

@@ -111,7 +111,6 @@ namespace QLTK_Lite
                     AppServer.SendToClient(acc.ID, MsgType.CSKB_CONFIG, JsonConvert.SerializeObject(acc.CSKBConfig));
 
                 Logger.Log($"Đã lưu cấu hình CSKB cho {selectedAccs.Count} tài khoản.");
-                MessageBox.Show($"Đã lưu cấu hình CSKB cho {selectedAccs.Count} tài khoản!", "Thành công");
             };
             tab.Controls.Add(btnSave);
         }

@@ -291,6 +291,9 @@ public static class Win32Window
                 return IntPtr.Zero;
 
             case WM_CLOSE:
+                if (string.IsNullOrEmpty(Account.Acc) || string.IsNullOrEmpty(Account.Pass))
+                    return DefWindowProc(hwnd, msg, wp, lp);
+
                 ShowWindow(hwnd, 0);
                 return IntPtr.Zero;
 

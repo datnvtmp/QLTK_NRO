@@ -5,6 +5,7 @@ using System.IO;
 public class Image : IDisposable
 {
 	public SKBitmap bitmap;
+ private SKImage skImage;
 	private bool _disposed;
 	private long _nativeSize;
 
@@ -19,6 +20,8 @@ public class Image : IDisposable
 			}
 			bitmap?.Dispose();
 			bitmap = null;
+           skImage?.Dispose();
+			skImage = null;
 			_disposed = true;
 		}
 	}
@@ -208,6 +211,19 @@ public class Image : IDisposable
 	public static int getImageWidth(Image image) => image.getWidth();
 	public static int getImageHeight(Image image) => image.getHeight();
 
+	public SKImage GetSkImage()
+	{
+		if (_disposed || bitmap == null)
+		{
+			return null;
+		}
+		if (skImage == null)
+		{
+			skImage = SKImage.FromBitmap(bitmap);
+		}
+		return skImage;
+	}
+
 	public int getWidth() => w / mGraphics.zoomLevel;
 	public int getHeight() => h / mGraphics.zoomLevel;
 
@@ -236,7 +252,9 @@ public class Image : IDisposable
 					_nativeSize = 0;
 				}
 				bitmap?.Dispose();
+              skImage?.Dispose();
 				bitmap = null;
+              skImage = null;
 				w = 0;
 				h = 0;
 				_disposed = true;

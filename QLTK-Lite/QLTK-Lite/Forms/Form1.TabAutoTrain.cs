@@ -164,7 +164,6 @@ namespace QLTK_Lite
                     AppServer.SendToClient(acc.ID, "CONFIG", JsonConvert.SerializeObject(acc.Config));
 
                 Logger.Log($"Đã lưu config cho {selectedAccs.Count} tài khoản.");
-                MessageBox.Show($"Đã lưu config cho {selectedAccs.Count} tài khoản!", "OK");
             };
 
             tab.Controls.Add(btnSave);
