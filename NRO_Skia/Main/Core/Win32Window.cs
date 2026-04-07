@@ -1,5 +1,7 @@
+using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 using SkiaSharp;
 
 public static class Win32Window
@@ -7,7 +9,11 @@ public static class Win32Window
     // ═══════════════════════════════════════════
     // WIN32 P/INVOKE
     // ═══════════════════════════════════════════
+    [DllImport("user32.dll", SetLastError = true)]
+    static extern bool SetProcessDpiAwarenessContext(int dpiFlag);
     [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
+    const int DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4;
+
     [DllImport("imm32.dll")] static extern IntPtr ImmGetContext(IntPtr hwnd);
     [DllImport("imm32.dll")] static extern bool ImmReleaseContext(IntPtr hwnd, IntPtr himc);
     [DllImport("imm32.dll")] static extern bool ImmAssociateContextEx(IntPtr hwnd, IntPtr himc, uint dwFlags);
@@ -103,7 +109,6 @@ public static class Win32Window
     const uint SRCCOPY = 0x00CC0020;
     const int IDC_ARROW = 32512;
 
-    // FPS khi visible và khi ẩn
     private static double FrameMsVisible => 1000.0 / AppConfig.FpsVisible;
     private static double FrameMsHidden => 1000.0 / AppConfig.FpsHidden;
 
@@ -128,7 +133,9 @@ public static class Win32Window
     // ═══════════════════════════════════════════
     public static void Run(int clientW, int clientH, string title, bool startHidden = false)
     {
-        SetProcessDPIAware();
+        // Tối ưu 4: DPI Awareness mới nhất
+        try { SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); }
+        catch { SetProcessDPIAware(); }
 
         Thread.CurrentThread.Name = Main.mainThreadName;
 
@@ -149,12 +156,10 @@ public static class Win32Window
         var rc = new RECT { right = clientW, bottom = clientH };
         AdjustWindowRect(ref rc, WS_FIXED_WINDOW, false);
 
-        // ✅ MỚI:
         _hwnd = CreateWindowEx(0, "NRO_Win32", title, WS_FIXED_WINDOW,
             100, 100, rc.right - rc.left, rc.bottom - rc.top,
             IntPtr.Zero, IntPtr.Zero, hInst, IntPtr.Zero);
 
-        // Tắt IME — UniKey gửi qua WM_CHAR trực tiếp
         ImmAssociateContextEx(_hwnd, IntPtr.Zero, 0);
 
         RebuildDIB(clientW, clientH);
@@ -186,35 +191,59 @@ public static class Win32Window
     }
 
     // ═══════════════════════════════════════════
-    // GAME LOOP THREAD
-    // Visible  → 60fps, update + render
-    // Hidden   → 20fps, update only (không render → tiết kiệm CPU)
+    // GAME LOOP THREAD (Tối ưu 1 & 3: Skia Render + Fixed Time Step)
     // ═══════════════════════════════════════════
     private static void GameLoopThread()
     {
         var sw = Stopwatch.StartNew();
+        double previousTime = sw.Elapsed.TotalMilliseconds;
+        double accumulator = 0.0;
 
         while (_running)
         {
+            double currentTime = sw.Elapsed.TotalMilliseconds;
+            double frameTime = currentTime - previousTime;
+            previousTime = currentTime;
+
+            // Chặn spiral of death nếu máy bị lag đột xuất
+            if (frameTime > 250.0) frameTime = 250.0;
+
+            accumulator += frameTime;
+
             bool visible = _isVisible;
-            double frameMs = visible ? FrameMsVisible : FrameMsHidden;
-            double frameStart = sw.Elapsed.TotalMilliseconds;
+            double targetFrameMs = visible ? FrameMsVisible : FrameMsHidden;
 
-            // Update logic
-            _loop?.OnUpdate();
+            // 1. Cập nhật logic (Fixed Time Step)
+            while (accumulator >= targetFrameMs)
+            {
+                _loop?.OnUpdate();
+                accumulator -= targetFrameMs;
+            }
 
-            // Render chỉ khi visible
-            if (visible)
+            // 2. Render bằng Skia (Background thread)
+            if (visible && _surface != null)
+            {
+                lock (_renderLock)
+                {
+                    var canvas = _surface.Canvas;
+                    canvas.Clear(SKColors.Black);
+                    mGraphics.canvas = canvas;
+                    _loop?.OnRender(canvas);
+                    _surface.Flush();
+                }
+
+                // Yêu cầu UI Thread vẽ lại khung hình
                 InvalidateRect(_hwnd, IntPtr.Zero, false);
+            }
 
-            // Sleep chính xác đến frame kế tiếp — không SpinWait
-            double elapsed = sw.Elapsed.TotalMilliseconds - frameStart;
-            double sleepMs = frameMs - elapsed;
+            // 3. Quản lý Sleep
+            double executionTime = sw.Elapsed.TotalMilliseconds - currentTime;
+            double sleepTime = targetFrameMs - executionTime;
 
-            if (sleepMs > 1.0)
-                Thread.Sleep((int)sleepMs);
-            else
-                Thread.Sleep(1); // yield CPU, không busy-wait
+            if (sleepTime > 1.0)
+                Thread.Sleep((int)sleepTime);
+            else if (sleepTime > 0.0)
+                Thread.Sleep(1);
         }
     }
 
@@ -231,23 +260,7 @@ public static class Win32Window
 
             case WM_SHOWWINDOW:
                 _isVisible = wp.ToInt64() != 0;
-                if (!_isVisible)
-                {
-                    lock (_renderLock) { CleanupDIB(); }
-                    GC.Collect(2, GCCollectionMode.Forced, true, true);
-                    GC.WaitForPendingFinalizers();
-                }
-                else
-                {
-                    lock (_renderLock)
-                    {
-                        if (_surface == null)
-                        {
-                            GetClientRect(hwnd, out RECT rect);
-                            RebuildDIB(rect.right, rect.bottom);
-                        }
-                    }
-                }
+                // Tối ưu 2: Đã loại bỏ GC.Collect và CleanupDIB ở đây
                 return DefWindowProc(hwnd, msg, wp, lp);
 
             case WM_SIZE:
@@ -255,11 +268,8 @@ public static class Win32Window
 
             case WM_KEYDOWN:
                 int vk = (int)wp;
-                // Chữ A-Z và số 0-9 để WM_CHAR xử lý (tránh duplicate với UniKey)
-                bool isPrintable = (vk >= 0x30 && vk <= 0x39)
-                                || (vk >= 0x41 && vk <= 0x5A);
-                if (!isPrintable)
-                    _loop?.OnKeyDown(vk);
+                bool isPrintable = (vk >= 0x30 && vk <= 0x39) || (vk >= 0x41 && vk <= 0x5A);
+                if (!isPrintable) _loop?.OnKeyDown(vk);
                 return IntPtr.Zero;
 
             case WM_KEYUP:
@@ -268,8 +278,7 @@ public static class Win32Window
 
             case WM_CHAR:
                 int ch = (int)wp;
-                if (ch >= 32) // bỏ control chars
-                    _loop?.OnChar(ch);
+                if (ch >= 32) _loop?.OnChar(ch);
                 return IntPtr.Zero;
 
             case WM_LBUTTONDOWN:
@@ -310,21 +319,15 @@ public static class Win32Window
     }
 
     // ═══════════════════════════════════════════
-    // PAINT
+    // PAINT (Tối ưu 1: Chỉ làm nhiệm vụ copy DIB)
     // ═══════════════════════════════════════════
     private static void OnPaint(IntPtr hwnd)
     {
         var hdc = BeginPaint(hwnd, out PAINTSTRUCT ps);
         lock (_renderLock)
         {
-            if (_surface != null && _bits != IntPtr.Zero)
+            if (_memDC != IntPtr.Zero)
             {
-                var canvas = _surface.Canvas;
-                canvas.Clear(SKColors.Black);
-                mGraphics.canvas = canvas;
-                _loop?.OnRender(canvas);
-                _surface.Flush();
-
                 GetClientRect(hwnd, out RECT rect);
                 BitBlt(hdc, 0, 0, rect.right, rect.bottom, _memDC, 0, 0, SRCCOPY);
             }
@@ -373,14 +376,6 @@ public static class Win32Window
     public static void ShowGameWindow()
     {
         if (_hwnd == IntPtr.Zero) return;
-        lock (_renderLock)
-        {
-            if (_surface == null)
-            {
-                GetClientRect(_hwnd, out RECT rect);
-                RebuildDIB(rect.right, rect.bottom);
-            }
-        }
         ShowWindow(_hwnd, 9);
         ShowWindow(_hwnd, 5);
         SetForegroundWindow(_hwnd);
