@@ -2,80 +2,34 @@ public class TransportScr : mScreen, IActionListener
 {
     public static TransportScr instance;
 
-    public static Image ship;
-
-    public static Image taungam;
-
     public sbyte type;
-
-    public int speed = 5;
-
-    public int[] posX;
-
-    public int[] posY;
-
-    public int[] posX2;
-
-    public int[] posY2;
-
-    private int cmx;
-
-    private int n = 20;
-
     public short time;
-
     public short maxTime;
 
     public long last;
-
     public long curr;
-
     private bool isSpeed;
-
     private bool transNow;
-
-    private int currSpeed;
-
-    public TransportScr()
-    {
-        posX = new int[n];
-        posY = new int[n];
-        for (int i = 0; i < n; i++)
-        {
-            posX[i] = Res.random(0, GameCanvas.w);
-            posY[i] = i * (GameCanvas.h / n);
-        }
-        posX2 = new int[n];
-        posY2 = new int[n];
-        for (int j = 0; j < n; j++)
-        {
-            posX2[j] = Res.random(0, GameCanvas.w);
-            posY2[j] = j * (GameCanvas.h / n);
-        }
-    }
+    private int frameCount; // Dùng để đếm frame thay cho việc tính quãng đường
 
     public static TransportScr gI()
     {
         if (instance == null)
-        {
             instance = new TransportScr();
-        }
         return instance;
     }
 
     public override void switchToMe()
     {
-        if (ship == null)
-        {
-            ship = GameCanvas.loadImage("/mainImage/myTexture2dfutherShip.png");
-        }
-        if (taungam == null)
-        {
-            taungam = GameCanvas.loadImage("/mainImage/taungam.png");
-        }
+        // Reset toàn bộ thông số
         isSpeed = false;
         transNow = false;
-        if (Char.myCharz().checkLuong() > 0 && type == 0)
+        frameCount = 0;
+        time = 0;
+        last = mSystem.currentTimeMillis();
+
+        // Hiện nút Tăng Tốc nếu đi Tàu Vũ Trụ (type == 0) và có tốn thời gian
+        if (Char.myCharz().checkLuong() > 0 && type == 0 && maxTime > 0)
         {
             center = new Command(mResources.faster, this, 1, null);
         }
@@ -83,31 +37,41 @@ public class TransportScr : mScreen, IActionListener
         {
             center = null;
         }
-        currSpeed = 0;
+
         base.switchToMe();
     }
 
     public override void paint(mGraphics g)
     {
-        // Nền đen
+        // 1. Nền đen hoàn toàn (Cực nhẹ cho GPU)
         g.setColor(0x000000);
         g.fillRect(0, 0, GameCanvas.w, GameCanvas.h);
 
-        // Logo giống màn login
-        g.drawImage(LoginScr.imgTitle, GameCanvas.w / 2, GameCanvas.h / 2 - 24, StaticObj.BOTTOM_HCENTER);
-
-        // Spinner shuriken
+        // 2. Logo (Nếu có) và vòng xoay nhỏ để biết game không bị đơ
+        if (LoginScr.imgTitle != null)
+            g.drawImage(LoginScr.imgTitle, GameCanvas.w / 2, GameCanvas.h / 2 - 24, StaticObj.BOTTOM_HCENTER);
         GameCanvas.paintShukiren(GameCanvas.hw, GameCanvas.h / 2 + 24, g);
 
-        // Chữ "Đang chuyển..."
-        mFont.tahoma_7b_white.drawString(g, "Đang load map...", GameCanvas.w / 2, GameCanvas.h / 2, 2);
+        // 3. Vẽ text thông báo
+        if (type == 0 && maxTime > 0 && !isSpeed)
+        {
+            int remain = maxTime - time;
+            if (remain < 0) remain = 0;
+            mFont.tahoma_7b_white.drawString(g, $"Đang di chuyển... {remain}s", GameCanvas.w / 2, GameCanvas.h / 2 + 45, 2);
+        }
+        else
+        {
+            mFont.tahoma_7b_white.drawString(g, "Đang load map...", GameCanvas.w / 2, GameCanvas.h / 2 + 45, 2);
+        }
 
         base.paint(g);
     }
+
     public override void update()
     {
         Controller.isStopReadMessage = false;
 
+        // Bộ đếm thời gian thực (Giây)
         curr = mSystem.currentTimeMillis();
         if (curr - last >= 1000)
         {
@@ -115,18 +79,41 @@ public class TransportScr : mScreen, IActionListener
             last = curr;
         }
 
-        // Giữ logic transport bắn gói tin
         if (!transNow)
         {
-            currSpeed++;
-            if (currSpeed >= 30)
+            if (type == 0) // LOGIC TÀU VŨ TRỤ
             {
-                transNow = true;
-                Service.gI().transportNow();
+                if (isSpeed)
+                {
+                    // Nếu bấm skip: cho chạy 30 frame (~0.5s) rồi nhảy map luôn
+                    frameCount++;
+                    if (frameCount > 30) DoTransport();
+                }
+                else
+                {
+                    // Nếu đợi thường: Chờ đủ thời gian maxTime mới nhảy map
+                    if (time >= maxTime)
+                    {
+                        frameCount++;
+                        if (frameCount > 10) DoTransport();
+                    }
+                }
+            }
+            else // LOGIC TÀU NGẦM (Type == 1)
+            {
+                // Tàu ngầm bản gốc đi rất lẹ, ta cho đợi khoảng 40 frame (~0.7s)
+                frameCount++;
+                if (frameCount > 40) DoTransport();
             }
         }
 
         base.update();
+    }
+
+    private void DoTransport()
+    {
+        transNow = true;
+        Service.gI().transportNow();
     }
 
     public override void updateKey()
@@ -140,13 +127,13 @@ public class TransportScr : mScreen, IActionListener
         {
             GameCanvas.startYesNoDlg(mResources.fasterQuestion, new Command(mResources.YES, this, 2, null), new Command(mResources.NO, this, 3, null));
         }
-        if (idAction == 2 && Char.myCharz().checkLuong() > 0)
+        else if (idAction == 2 && Char.myCharz().checkLuong() > 0)
         {
             isSpeed = true;
             GameCanvas.endDlg();
             center = null;
         }
-        if (idAction == 3)
+        else if (idAction == 3)
         {
             GameCanvas.endDlg();
         }
