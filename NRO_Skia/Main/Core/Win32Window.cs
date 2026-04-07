@@ -311,6 +311,10 @@ public static class Win32Window
                 GameCanvas.bRun = false;
                 Session_ME.gI().close();
                 Session_ME2.gI().close();
+
+                // 👉 THÊM DÒNG NÀY ĐỂ GỌI DISPOSE:
+                _loop?.Dispose();
+
                 lock (_renderLock) { CleanupDIB(); }
                 PostQuitMessage(0);
                 return IntPtr.Zero;
