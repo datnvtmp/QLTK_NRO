@@ -1,0 +1,22 @@
+<project outputDir="Confused" baseDir="bin\Release" xmlns="http://confuser.codeplex.com">
+  <rule pattern="true" inherit="false">
+    <!-- Bỏ rename cho module chính để tránh lỗi reflection/dynamic khi xử lý JSON -->
+    <!-- <protection id="rename" /> -->
+    <protection id="constants" />
+    <protection id="ctrl flow" />
+    <protection id="anti debug" />
+    <protection id="ref proxy" />
+  </rule>
+  <packer id="compressor" />
+  
+  <module path="QLTK-Lite.exe" />
+  <module path="Newtonsoft.Json.dll" />
+  <module path="Microsoft.Bcl.AsyncInterfaces.dll" />
+  <module path="System.Buffers.dll" />
+  <module path="System.IO.Pipelines.dll" />
+  <module path="System.Memory.dll" />
+  <module path="System.Numerics.Vectors.dll" />
+  <module path="System.Runtime.CompilerServices.Unsafe.dll" />
+  <module path="System.Text.Encodings.Web.dll" />
+  <module path="System.Threading.Tasks.Extensions.dll" />
+</project>
