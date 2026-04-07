@@ -1,4 +1,4 @@
-﻿using SkiaSharp;
+using SkiaSharp;
 using System;
 using System.Collections;
 using Assets.src.e;
@@ -271,7 +271,7 @@ public class mGraphics
         if (isClip) canvas.ClipRect(GetClipSKRect());
         if (transform != 0) ApplyTransform(transform, dx + dw / 2f, dy + dh / 2f);
         _paint.Style = SKPaintStyle.Fill;
-        canvas.DrawImage(skImage, src, dst, _paint);
+        canvas.DrawImage(skImage, src, dst, SKSamplingOptions.Default, _paint);
         canvas.Restore();
     }
 
@@ -308,7 +308,7 @@ public class mGraphics
         if (isClip) canvas.ClipRect(GetClipSKRect());
         if (transform != 0) ApplyTransform(transform, dx + dw / 2f, dy + dh / 2f);
         _paint.Style = SKPaintStyle.Fill;
-        canvas.DrawImage(skImage, src, dst, _paint);
+        canvas.DrawImage(skImage, src, dst, SKSamplingOptions.Default, _paint);
         canvas.Restore();
     }
 
@@ -355,7 +355,7 @@ public class mGraphics
         canvas.Save();
         if (isClip) canvas.ClipRect(GetClipSKRect());
         if (transform != 0) ApplyTransform(transform, dx + dw / 2f, dy + dh / 2f);
-        canvas.DrawImage(skImage, src, dst, _paint);
+        canvas.DrawImage(skImage, src, dst, SKSamplingOptions.Default, _paint);
         canvas.Restore();
         _paint.ColorFilter = null;
     }
@@ -412,14 +412,14 @@ public class mGraphics
         var dst = new SKRect(px, py, px + pw, py + ph);
         canvas.Save();
         if (transform != 0) canvas.Scale(-1, 1, px + pw / 2f, py + ph / 2f);
-        canvas.DrawBitmap(image.bitmap, src, dst, _paint);
+        canvas.DrawImage(image.GetSkImage(), src, dst, SKSamplingOptions.Default, _paint);
         canvas.Restore();
     }
 
     public void drawImageSimple(Image image, int x, int y)
     {
         if (canvas == null || image?.bitmap == null) return;
-        canvas.DrawBitmap(image.bitmap, x * zoomLevel, y * zoomLevel, _paint);
+        canvas.DrawImage(image.GetSkImage(), x * zoomLevel, y * zoomLevel, _paint);
     }
 
     // ─────────────────────────────────────────────

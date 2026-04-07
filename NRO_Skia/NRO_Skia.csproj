@@ -32,13 +32,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="SkiaSharp" Version="2.88.9" />
-		<PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="2.88.9" />
+		<PackageReference Include="SkiaSharp" Version="3.119.2" />
+		<PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.119.2" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<Compile Remove="BenchmarkSuite1\**\*.cs" />
-	</ItemGroup>
 
 	<Target Name="RemoveNativePdb" AfterTargets="Publish">
 		<ItemGroup>

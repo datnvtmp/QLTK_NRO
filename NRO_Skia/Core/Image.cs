@@ -118,7 +118,7 @@ public class Image : IDisposable
 				canvas.Translate(w, 0);
 				canvas.Scale(-1, 1);
 			}
-			canvas.DrawBitmap(src.bitmap, new SKRectI(x, y, x + w, y + h), new SKRect(0, 0, w, h));
+			canvas.DrawImage(src.GetSkImage(), new SKRect(x, y, x + w, y + h), new SKRect(0, 0, w, h), SKSamplingOptions.Default);
 		}
 		return new Image { bitmap = newBmp, w = w, h = h }.WithTracking();
 	}
