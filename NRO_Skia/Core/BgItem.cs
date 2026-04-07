@@ -117,22 +117,7 @@ public class BgItem
 
 	public void changeColor()
 	{
-		if (isNotBlend() || layer == 2 || layer == 4 || imgNew.containsKey(idImage + "blend" + layer))
-		{
-			return;
-		}
-		Image image = (Image)imgNew.get(idImage + string.Empty);
-		if (image != null && image.getRealImageWidth() > 4)
-		{
-			sbyte[] array = Rms.loadRMS("x" + mGraphics.zoomLevel + "blend" + idImage + "layer" + layer);
-			if (array == null)
-			{
-				imgNew.put(idImage + "blend" + layer, BgItemMn.blendImage(image, layer, idImage));
-				return;
-			}
-			Image v = Image.createImage(array, 0, array.Length);
-			imgNew.put(idImage + "blend" + layer, v);
-		}
+		
 	}
 
 	public void paint(mGraphics g)
