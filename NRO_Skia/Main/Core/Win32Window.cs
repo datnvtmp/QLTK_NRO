@@ -10,9 +10,12 @@ public static class Win32Window
     // WIN32 P/INVOKE
     // ═══════════════════════════════════════════
     [DllImport("user32.dll", SetLastError = true)]
-    static extern bool SetProcessDpiAwarenessContext(int dpiFlag);
+    static extern bool SetProcessDpiAwarenessContext(IntPtr dpiFlag);
     [DllImport("user32.dll")] static extern bool SetProcessDPIAware();
-    const int DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4;
+    [DllImport("user32.dll")] static extern uint GetDpiForSystem();
+    [DllImport("user32.dll")] static extern bool AdjustWindowRectExForDpi(ref RECT lpRect, uint dwStyle, bool bMenu, uint dwExStyle, uint dpi);
+
+    static readonly IntPtr DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = (IntPtr)(-4);
 
     [DllImport("imm32.dll")] static extern IntPtr ImmGetContext(IntPtr hwnd);
     [DllImport("imm32.dll")] static extern bool ImmReleaseContext(IntPtr hwnd, IntPtr himc);
@@ -131,12 +134,14 @@ public static class Win32Window
     // ═══════════════════════════════════════════
     // PUBLIC
     // ═══════════════════════════════════════════
+    public static void InitializeDpiAwareness()
+    {
+        try { SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); }
+        catch { try { SetProcessDPIAware(); } catch { } }
+    }
+
     public static void Run(int clientW, int clientH, string title, bool startHidden = false)
     {
-        // Tối ưu 4: DPI Awareness mới nhất
-        try { SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); }
-        catch { SetProcessDPIAware(); }
-
         Thread.CurrentThread.Name = Main.mainThreadName;
 
         var hInst = GetModuleHandle(null);
@@ -153,8 +158,19 @@ public static class Win32Window
         };
         RegisterClassEx(ref wc);
 
-        var rc = new RECT { right = clientW, bottom = clientH };
-        AdjustWindowRect(ref rc, WS_FIXED_WINDOW, false);
+        // Tính toán kích thước cửa sổ dựa trên DPI thực tế để vùng Client không bị lệch
+        uint dpi = GetDpiForSystem();
+        if (dpi == 0) dpi = 96;
+
+        var rc = new RECT { left = 0, top = 0, right = clientW, bottom = clientH };
+        try
+        {
+            AdjustWindowRectExForDpi(ref rc, WS_FIXED_WINDOW, false, 0, dpi);
+        }
+        catch
+        {
+            AdjustWindowRect(ref rc, WS_FIXED_WINDOW, false);
+        }
 
         _hwnd = CreateWindowEx(0, "NRO_Win32", title, WS_FIXED_WINDOW,
             100, 100, rc.right - rc.left, rc.bottom - rc.top,

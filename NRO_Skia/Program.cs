@@ -14,6 +14,7 @@ static class Program
     [STAThread]
     static void Main(string[] args)
     {
+        Win32Window.InitializeDpiAwareness();
         // 1. Cài đặt bộ bắt lỗi toàn cục
         AppDomain.CurrentDomain.UnhandledException += (s, e) => LogCrash(e.ExceptionObject);
         TaskScheduler.UnobservedTaskException += (s, e) => LogCrash(e.Exception);
