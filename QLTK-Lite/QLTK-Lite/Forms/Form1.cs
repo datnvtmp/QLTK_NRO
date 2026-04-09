@@ -23,6 +23,7 @@ namespace QLTK_Lite
         internal RichTextBox _logBox;
         private SplitContainer _splitBottom;
         private TabPage _tabAutoTrain;
+        private TabPage _tabFarmManh;
         private TabPage _tabCSKB;
         private readonly Dictionary<int, int> _pendingCSKBTrades = new Dictionary<int, int>();
 
@@ -139,6 +140,7 @@ namespace QLTK_Lite
                 AppServer.SendToClient(acc.ID, MsgType.CONFIG, JsonConvert.SerializeObject(acc.Config));
                 AppServer.SendToClient(acc.ID, MsgType.BOSS_CONFIG, JsonConvert.SerializeObject(acc.BossConfig));
                 AppServer.SendToClient(acc.ID, MsgType.CSKB_CONFIG, JsonConvert.SerializeObject(acc.CSKBConfig));
+                AppServer.SendToClient(acc.ID, MsgType.FARM_MANH_CONFIG, JsonConvert.SerializeObject(acc.FarmManhConfig));
             }));
         }
 

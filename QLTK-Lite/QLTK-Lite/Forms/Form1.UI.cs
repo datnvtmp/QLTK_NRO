@@ -154,10 +154,11 @@ namespace QLTK_Lite
 
             var tabs = new TabControl { Dock = DockStyle.Fill, Padding = new Point(15, 6) };
             _tabAutoTrain = new TabPage("Auto Train");
+            _tabFarmManh = new TabPage("Farm Mảnh");
             _tabCSKB = new TabPage("CSKB");
             var tabBoss = new TabPage("Săn Boss");
             var tabConfig = new TabPage("Cấu hình chung");
-            tabs.TabPages.AddRange(new[] { _tabAutoTrain, _tabCSKB, tabBoss, tabConfig });
+            tabs.TabPages.AddRange(new[] { _tabAutoTrain, _tabFarmManh, _tabCSKB, tabBoss, tabConfig });
             _splitBottom.Panel1.Controls.Add(tabs);
 
             // ── MỚI: Panel bọc ngoài để chứa cả RichTextBox + Button ──
@@ -194,6 +195,7 @@ namespace QLTK_Lite
             _logBox = txtLog;
 
             InitTabAutoTrain(_tabAutoTrain);
+            InitTabFarmManh(_tabFarmManh);
             InitTabSanBoss(tabBoss);
             InitCSKB(_tabCSKB); // ← thêm dòng này
         }

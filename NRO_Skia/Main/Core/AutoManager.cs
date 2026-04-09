@@ -3,6 +3,7 @@ using Mod;
 using NRO_Skia.Main.AutoTrain;
 using NRO_Skia.Main.Core;
 using NRO_Skia.Main.CSKB;
+using NRO_Skia.Main.FarmManh;
 using NRO_Skia.Main.Until;
 using System;
 using System.Threading.Tasks;
@@ -46,7 +47,8 @@ public static class AutoManager
         AutoOffWhenEnough();
         AutoBuyBua.Update();
         AutoCSKB.Update();
-        UpdateAttackAll(); // 
+        AutoFarmManh.Update();
+        UpdateAttackAll(); 
         UpdateAutoAttack();
         UpdateAutoLive();
         //TestGD();

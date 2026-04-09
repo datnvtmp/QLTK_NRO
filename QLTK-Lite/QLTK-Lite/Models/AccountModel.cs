@@ -15,6 +15,7 @@ namespace QLTK_Lite.Models
         public AccConfig Config { get; set; } = new AccConfig();
         public BossConfig BossConfig { get; set; } = new BossConfig();
         public CSKBConfig CSKBConfig { get; set; } = new CSKBConfig();
+        public FarmManhConfig FarmManhConfig { get; set; } = new FarmManhConfig();
 
         [JsonIgnore] public string DataInGame { get; set; } = "-";
         [JsonIgnore] public string Status { get; set; } = "-";

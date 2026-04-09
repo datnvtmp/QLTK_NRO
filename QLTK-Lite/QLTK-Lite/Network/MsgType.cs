@@ -19,4 +19,5 @@ public static class MsgType
     public const string CSKB_RECEIVER_ID = "CSKB_RECEIVER_ID";
     public const string CSKB_RECEIVER_FULL = "CSKB_RECEIVER_FULL";
     public const string CSKB_RECEIVER_DONE = "CSKB_RECEIVER_DONE";
+    public const string FARM_MANH_CONFIG = "FARM_MANH_CONFIG";
 }

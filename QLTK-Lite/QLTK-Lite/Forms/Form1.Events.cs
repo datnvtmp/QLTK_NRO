@@ -21,6 +21,7 @@ namespace QLTK_Lite
                 {
                     LoadConfigToForm(_tabAutoTrain, acc.Config);
                     LoadCSKBConfigToForm(_tabCSKB, acc.CSKBConfig);
+                    LoadFarmManhConfigToForm(_tabFarmManh, acc.FarmManhConfig);
                 }
                 _logBox.Text = acc.LastInfo;
             }

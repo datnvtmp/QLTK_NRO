@@ -1,6 +1,7 @@
 using NRO_Skia.Main.AutoTrain;
 using NRO_Skia.Main.Core;
 using NRO_Skia.Main.CSKB;
+using NRO_Skia.Main.FarmManh;
 using System.Runtime;
 using System.Text.Json; // thay Newtonsoft
 using SkiaSharp;
@@ -64,6 +65,12 @@ static class Program
                         var config = JsonSerializer.Deserialize(payload, CskbConfigContext.Default.CSKBConfig);
                         AutoCSKB.Config = config;
                         AutoCSKB.ResetApplied();
+                    }
+                    if (type == MsgType.FARM_MANH_CONFIG)
+                    {
+                        var config = JsonSerializer.Deserialize(payload, FarmManhConfigContext.Default.FarmManhConfig);
+                        AutoFarmManh.Config = config;
+                        AutoFarmManh.ResetApplied();
                     }
                 };
             }

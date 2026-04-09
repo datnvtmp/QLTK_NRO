@@ -129,11 +129,15 @@
     <Compile Include="Forms\Form1.UI.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Forms\Form1.TabFarmManh.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\HanhTrangForm.cs" />
     <Compile Include="Models\AccConfig.cs" />
     <Compile Include="Models\AccountModel.cs" />
     <Compile Include="Models\BossConfig.cs" />
     <Compile Include="Models\CSKBConfig.cs" />
+    <Compile Include="Models\FarmManhConfig.cs" />
     <Compile Include="Network\AppServer.cs" />
     <Compile Include="Network\GameInfo.cs" />
     <Compile Include="Network\Logger.cs" />
