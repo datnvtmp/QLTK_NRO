@@ -74,6 +74,7 @@ namespace QLTK_Lite
             dgvAccounts.Columns["LastInfo"].Visible = false;
             dgvAccounts.Columns["BossConfig"].Visible = false;
             dgvAccounts.Columns["CSKBConfig"].Visible = false;
+            dgvAccounts.Columns["FarmManhConfig"].Visible = false;
             dgvAccounts.Columns["TrainStartTime"].Visible = false;
 
             dgvAccounts.Columns["Server"].HeaderText = "Server";
