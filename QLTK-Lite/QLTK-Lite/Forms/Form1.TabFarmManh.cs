@@ -20,14 +20,9 @@ namespace QLTK_Lite
             tab.Controls.Add(MakeHeader("Farming", x, y));
             y += 25;
 
-            var chkFarmAoQuan = new CheckBox { Name = "chkFarmAoQuan", Text = "Farm áo/quần", Location = new Point(x, y), AutoSize = true };
-            y += gap;
-            var chkFarmGang = new CheckBox { Name = "chkFarmGang", Text = "Farm găng", Location = new Point(x, y), AutoSize = true };
-            y += gap;
-            var chkFarmNhan = new CheckBox { Name = "chkFarmNhan", Text = "Farm nhẫn", Location = new Point(x, y), AutoSize = true };
-            y += gap;
-
-            tab.Controls.AddRange(new Control[] { chkFarmAoQuan, chkFarmGang, chkFarmNhan });
+            AddFarmManhRow(tab, "Farm áo/quần", "chkFarmAoQuan", "cboQuantityAoQuan", ref y, x, gap);
+            AddFarmManhRow(tab, "Farm găng", "chkFarmGang", "cboQuantityGang", ref y, x, gap);
+            AddFarmManhRow(tab, "Farm nhẫn", "chkFarmNhan", "cboQuantityNhan", ref y, x, gap);
 
             var btnSave = new Button
             {
@@ -83,8 +78,11 @@ namespace QLTK_Lite
             return new FarmManhConfig
             {
                 IsFarmAoQuan = ((CheckBox)tab.Controls["chkFarmAoQuan"]).Checked,
+                QuantityAoQuan = int.Parse(((ComboBox)tab.Controls["cboQuantityAoQuan"]).Text),
                 IsFarmGang = ((CheckBox)tab.Controls["chkFarmGang"]).Checked,
+                QuantityGang = int.Parse(((ComboBox)tab.Controls["cboQuantityGang"]).Text),
                 IsFarmNhan = ((CheckBox)tab.Controls["chkFarmNhan"]).Checked,
+                QuantityNhan = int.Parse(((ComboBox)tab.Controls["cboQuantityNhan"]).Text),
             };
         }
 
@@ -92,8 +90,21 @@ namespace QLTK_Lite
         {
             if (cfg == null) cfg = new FarmManhConfig();
             ((CheckBox)tab.Controls["chkFarmAoQuan"]).Checked = cfg.IsFarmAoQuan;
+            ((ComboBox)tab.Controls["cboQuantityAoQuan"]).Text = cfg.QuantityAoQuan.ToString();
             ((CheckBox)tab.Controls["chkFarmGang"]).Checked = cfg.IsFarmGang;
+            ((ComboBox)tab.Controls["cboQuantityGang"]).Text = cfg.QuantityGang.ToString();
             ((CheckBox)tab.Controls["chkFarmNhan"]).Checked = cfg.IsFarmNhan;
+            ((ComboBox)tab.Controls["cboQuantityNhan"]).Text = cfg.QuantityNhan.ToString();
+        }
+
+        private void AddFarmManhRow(TabPage tab, string text, string chkName, string cboName, ref int y, int x, int gap)
+        {
+            var chk = new CheckBox { Name = chkName, Text = text, Location = new Point(x, y), AutoSize = true };
+            var cbo = new ComboBox { Name = cboName, Location = new Point(x + 120, y - 2), Width = 50, DropDownStyle = ComboBoxStyle.DropDownList };
+            cbo.Items.AddRange(new object[] { "40", "80" });
+            cbo.Text = "40";
+            tab.Controls.AddRange(new Control[] { chk, cbo });
+            y += gap;
         }
     }
 }

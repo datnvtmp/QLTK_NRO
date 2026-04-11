@@ -43,10 +43,10 @@ public static class AutoManager
     public static void Update()
     {
         MainXmap.Update();
+        AutoCSKB.Update();
         AutoTrain.Update();
         AutoOffWhenEnough();
         AutoBuyBua.Update();
-        AutoCSKB.Update();
         AutoFarmManh.Update();
         UpdateAttackAll(); 
         UpdateAutoAttack();

@@ -5723,7 +5723,7 @@ public class Panel : IActionListener, IChatable
                     }
                 }
             }
-            nameFont.drawString(g, item.template.name + upgradeText, ix + 5, iy + 1, 0);
+            nameFont.drawString(g, "[" + item.template.id + "] " + item.template.name + upgradeText, ix + 5, iy + 1, 0);
 
             // --- Chỉ số item ---
             if (item.itemOption != null)

@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Text;
 using Mod;
 
 // ═══════════════════════════════════════════════════════
@@ -14,6 +15,10 @@ public class AutoItemRef
 
     private long _nextUseTime = 0;
     private bool _warnedEmpty = false;
+    private long _verifyIconUntil = 0;
+    private bool _iconMappingChecked = false;
+    private bool _iconMappingValid = true;
+    private long _nextDebugTime = 0;
 
     public AutoItemRef(string name, int id, int idCon)
     {
@@ -30,14 +35,17 @@ public class AutoItemRef
         if (Char.myCharz()?.meDead == true) return;
         if (Lib.TimeNow() < _nextUseTime) return;
 
+        long now = Lib.TimeNow();
+
         if (!Lib.ExistItemBag(Id))
         {
             if (!_warnedEmpty)
             {
                 GameScr.info1?.addInfo($"|4|Đã hết {Name}, đang chờ...");
+                Logger.Log("[AutoItem] Đã hết " + Name + ", đang chờ...");
                 _warnedEmpty = true;
             }
-            _nextUseTime = Lib.TimeNow() + 10_000L;
+            _nextUseTime = now + 10_000L;
             return;
         }
         _warnedEmpty = false;
@@ -48,13 +56,65 @@ public class AutoItemRef
             int timeLeft = Lib.GetItemTimeInSeconds(IdCon);
             if (timeLeft > 0)
             {
-                _nextUseTime = Lib.TimeNow() + timeLeft * 1000L;
+                if (now >= _nextDebugTime)
+                {
+                    Logger.Log("[AutoItem] " + Name + ": idCon=" + IdCon + " hợp lệ, timeLeft=" + timeLeft + "s. Buff đang có: " + GetActiveBuffIconsDebug());
+                    _nextDebugTime = now + 15_000L;
+                }
+                _iconMappingChecked = true;
+                _iconMappingValid = true;
+                _verifyIconUntil = 0;
+                _nextUseTime = now + timeLeft * 1000L;
+                return;
+            }
+
+            if (_verifyIconUntil > 0)
+            {
+                if (now < _verifyIconUntil)
+                {
+                    _nextUseTime = now + 1000L;
+                    return;
+                }
+
+                _verifyIconUntil = 0;
+                _iconMappingChecked = true;
+                _iconMappingValid = false;
+
+                if (now >= _nextDebugTime)
+                {
+                    GameScr.info1?.addInfo($"|1|[AutoItem] {Name}: idCon={IdCon} có thể sai. Buff đang có: {GetActiveBuffIconsDebug()}");
+                    Logger.Log("[AutoItem] " + Name + ": idCon=" + IdCon + " có thể sai. Buff đang có: " + GetActiveBuffIconsDebug());
+                    _nextDebugTime = now + 15_000L;
+                }
                 return;
             }
         }
 
         Lib.UseItem(Id);
-        _nextUseTime = Lib.TimeNow() + (IdCon == -1 ? 30_000 : 3_000);
+        Logger.Log("[AutoItem] Dùng item " + Name + " (itemId=" + Id + ", idCon=" + IdCon + ")");
+
+        if (IdCon == -1)
+        {
+            _nextUseTime = now + 30_000L;
+            return;
+        }
+
+        _verifyIconUntil = now + 4_000L;
+        _nextUseTime = now + ((_iconMappingChecked && !_iconMappingValid) ? 30_000L : 10_000L);
+    }
+
+    private static string GetActiveBuffIconsDebug()
+    {
+        if (Char.vItemTime == null || Char.vItemTime.size() == 0) return "(none)";
+
+        var sb = new StringBuilder();
+        for (int i = 0; i < Char.vItemTime.size(); i++)
+        {
+            if (Char.vItemTime.elementAt(i) is not ItemTime it) continue;
+            if (sb.Length > 0) sb.Append(", ");
+            sb.Append(it.idIcon).Append(":").Append(it.coutTime);
+        }
+        return sb.Length == 0 ? "(none)" : sb.ToString();
     }
 }
 
@@ -83,7 +143,8 @@ public class AutoItemManager
             return;
         }
         _items[itemId] = new AutoItemRef(name, itemId, idCon);
-        GameScr.info1?.addInfo($"|2|Đã bật Auto {name}!");
+        GameScr.info1?.addInfo($"|2|Đã bật Auto {name} (idCon={idCon})!");
+        Logger.Log("[AutoItem] StartAutoItem name=" + name + ", itemId=" + itemId + ", idCon=" + idCon);
     }
 
     public void StopAutoItem(int itemId)

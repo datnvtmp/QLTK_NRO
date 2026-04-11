@@ -25,7 +25,11 @@ namespace QLTK_Lite
         private TabPage _tabAutoTrain;
         private TabPage _tabFarmManh;
         private TabPage _tabCSKB;
-        private readonly Dictionary<int, int> _pendingCSKBTrades = new Dictionary<int, int>();
+
+        // ── CSKB Queue System ──
+        private readonly Queue<int> _cskbUpQueue = new Queue<int>(); // Bot Up IDs chờ giao dịch
+        private int _cskbActiveSenderId = -1;   // Bot Up đang giao dịch
+        private int _cskbActiveReceiverId = -1;  // Bot Nhận đang giao dịch
 
         private readonly BotService _botService = new BotService();
         // ← THÊM MỚI
@@ -117,6 +121,24 @@ namespace QLTK_Lite
                 if (acc == null) return;
                 acc.Status = "Offline";
                 acc.DataInGame = "";
+
+                // Nếu bot Up disconnect khi đang trong queue → xóa khỏi queue
+                if (_cskbUpQueue.Contains(id))
+                {
+                    var temp = new Queue<int>(_cskbUpQueue.Where(x => x != id));
+                    _cskbUpQueue.Clear();
+                    foreach (var x in temp) _cskbUpQueue.Enqueue(x);
+                    Logger.Log($"[CSKB] Acc Up {acc.Username} disconnect, da xoa khoi queue.");
+                }
+
+                // Nếu bot Up disconnect khi đang trade → hủy trade, xử lý queue tiếp
+                if (_cskbActiveSenderId == id)
+                {
+                    Logger.Log($"[CSKB] Acc Up {acc.Username} disconnect khi dang trade. Huy trade.");
+                    _cskbActiveSenderId = -1;
+                    _cskbActiveReceiverId = -1;
+                    ProcessCSKBQueue();
+                }
             }));
         }
         private void OnHanhTrangReceived(int id, string payload)
@@ -156,47 +178,36 @@ namespace QLTK_Lite
 
         private void InitCSKBHandlers()
         {
+            // ── Bot Up báo đã đầy 99 CSKB ──
             AppServer.OnCSKBFull += (senderId, payload) =>
             {
                 this.Invoke((Action)(() =>
                 {
+                    // Không thêm trùng: đã trong queue hoặc đang trade
+                    if (_cskbUpQueue.Contains(senderId) || _cskbActiveSenderId == senderId)
+                        return;
+
                     var sender = accountList.FirstOrDefault(a => a.ID == senderId);
-                    if (sender == null) return;
-
-                    // Tìm acc nhận (Type 1) mà chưa full và không online
-                    var receiver = accountList.FirstOrDefault(a => 
-                        a.CSKBConfig.IsCSKB && 
-                        a.CSKBConfig.CSKBType == 1 && 
-                        !a.CSKBConfig.IsFull && 
-                        (a.Status == "Offline" || a.Status == "-" || string.IsNullOrEmpty(a.Status)));
-
-                    if (receiver != null)
-                    {
-                        _pendingCSKBTrades[receiver.ID] = senderId;
-                        receiver.IsSelected = true;
-                        if (!_botService.IsRunning) _botService.Start();
-                        dgvAccounts.Refresh();
-                        Logger.Log($"[CSKB] Acc Up {sender.Username} yeu cau, dang mo acc nhan {receiver.Username}");
-                    }
-                    else
-                    {
-                        Logger.Log($"[CSKB] Acc Up {sender.Username} yeu cau nhung khong tim thay acc nhan nao trong!");
-                    }
+                    _cskbUpQueue.Enqueue(senderId);
+                    Logger.Log($"[CSKB] Acc Up {sender?.Username} vao hang doi (queue: {_cskbUpQueue.Count})");
+                    ProcessCSKBQueue();
                 }));
             };
 
+            // ── Bot Nhận gửi charID về ──
             AppServer.OnCSKBReceiverId += (receiverId, payload) =>
             {
                 this.Invoke((Action)(() =>
                 {
-                    if (_pendingCSKBTrades.TryGetValue(receiverId, out int senderId))
+                    if (_cskbActiveReceiverId == receiverId && _cskbActiveSenderId != -1)
                     {
-                        AppServer.SendToClient(senderId, MsgType.CSKB_RECEIVER_ID, payload);
-                        Logger.Log($"[CSKB] Da gui ID {payload} tu acc nhan {receiverId} cho acc up {senderId}");
+                        AppServer.SendToClient(_cskbActiveSenderId, MsgType.CSKB_RECEIVER_ID, payload);
+                        Logger.Log($"[CSKB] Da gui ID {payload} tu acc nhan {receiverId} cho acc up {_cskbActiveSenderId}");
                     }
                 }));
             };
 
+            // ── Bot Nhận báo rương đầy ──
             AppServer.OnCSKBReceiverFull += (receiverId, payload) =>
             {
                 this.Invoke((Action)(() =>
@@ -211,9 +222,26 @@ namespace QLTK_Lite
                         SaveAccountsToFile();
                         Logger.Log($"[CSKB] Acc nhan {acc.Username} da bao FULL!");
                     }
+
+                    if (_cskbActiveReceiverId == receiverId)
+                    {
+                        int failedSenderId = _cskbActiveSenderId;
+                        _cskbActiveSenderId = -1;
+                        _cskbActiveReceiverId = -1;
+
+                        // Re-queue sender vì giao dịch chưa thành công
+                        if (failedSenderId != -1 && !_cskbUpQueue.Contains(failedSenderId))
+                        {
+                            _cskbUpQueue.Enqueue(failedSenderId);
+                            var sender = accountList.FirstOrDefault(a => a.ID == failedSenderId);
+                            Logger.Log($"[CSKB] Re-queue acc up {sender?.Username} vi acc nhan full");
+                        }
+                        ProcessCSKBQueue();
+                    }
                 }));
             };
 
+            // ── Bot Nhận cất đồ xong ──
             AppServer.OnCSKBReceiverDone += (receiverId, payload) =>
             {
                 this.Invoke((Action)(() =>
@@ -226,8 +254,52 @@ namespace QLTK_Lite
                         dgvAccounts.Refresh();
                         Logger.Log($"[CSKB] Acc nhan {acc.Username} da cat xong do va TU DONG TAT.");
                     }
+
+                    if (_cskbActiveReceiverId == receiverId)
+                    {
+                        _cskbActiveSenderId = -1;
+                        _cskbActiveReceiverId = -1;
+                        ProcessCSKBQueue(); // Xử lý bot Up tiếp theo trong queue
+                    }
                 }));
             };
+        }
+
+        /// <summary>Xử lý queue: ghép bot Up tiếp theo với acc nhận rảnh</summary>
+        private void ProcessCSKBQueue()
+        {
+            // Đang có giao dịch active → chờ
+            if (_cskbActiveSenderId != -1) return;
+            if (_cskbUpQueue.Count == 0) return;
+
+            // Bot service chưa chạy → chờ user bấm nút Bắt đầu
+            if (!_botService.IsRunning)
+            {
+                Logger.Log($"[CSKB] Bot chua chay! {_cskbUpQueue.Count} acc Up dang doi. Hay bam nut Bat dau.");
+                return;
+            }
+
+            // Tìm acc nhận rảnh (offline, chưa full)
+            var receiver = accountList.FirstOrDefault(a =>
+                a.CSKBConfig.IsCSKB &&
+                a.CSKBConfig.CSKBType == 1 &&
+                !a.CSKBConfig.IsFull &&
+                (a.Status == "Offline" || a.Status == "-" || string.IsNullOrEmpty(a.Status)));
+
+            if (receiver == null)
+            {
+                Logger.Log($"[CSKB] Khong co acc nhan nao! {_cskbUpQueue.Count} acc Up dang doi.");
+                return; // Giữ trong queue, sẽ xử lý khi có acc nhận rảnh (DONE)
+            }
+
+            int senderId = _cskbUpQueue.Dequeue();
+            var sender = accountList.FirstOrDefault(a => a.ID == senderId);
+
+            _cskbActiveSenderId = senderId;
+            _cskbActiveReceiverId = receiver.ID;
+            receiver.IsSelected = true; // BotService.RunLoop sẽ tự detect và mở acc này
+            dgvAccounts.Refresh();
+            Logger.Log($"[CSKB] Ghep: Up [{sender?.Username}] <-> Nhan [{receiver.Username}] (con {_cskbUpQueue.Count} trong queue)");
         }
 
 
