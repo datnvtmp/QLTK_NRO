@@ -229,13 +229,9 @@ namespace QLTK_Lite
                         _cskbActiveSenderId = -1;
                         _cskbActiveReceiverId = -1;
 
-                        // Re-queue sender vì giao dịch chưa thành công
-                        if (failedSenderId != -1 && !_cskbUpQueue.Contains(failedSenderId))
-                        {
-                            _cskbUpQueue.Enqueue(failedSenderId);
-                            var sender = accountList.FirstOrDefault(a => a.ID == failedSenderId);
-                            Logger.Log($"[CSKB] Re-queue acc up {sender?.Username} vi acc nhan full");
-                        }
+                        // Bỏ logic re-queue manual: Giao dịch thực tế đã XONG thì bot nhận mới đi cất và báo FULL.
+                        // Nếu acc Up vẫn còn >= 99 đồ, cơ chế heartbeat 10s của nó sẽ tự báo CSKB_FULL để QLTK gọi lại.
+                        // Nếu ép re-queue ở đây, acc Up đã hết đồ sẽ đứng im, làm kẹt acc nhận mới.
                         ProcessCSKBQueue();
                     }
                 }));

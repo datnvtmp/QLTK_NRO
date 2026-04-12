@@ -11,7 +11,7 @@ namespace QLTK_Lite
         // ══════════════════════════════════════════════════════
         // ĐỔI DÒNG NÀY MỖI LẦN RELEASE (khớp với tag trên GitHub)
         // ══════════════════════════════════════════════════════
-        public const string CURRENT_VERSION = "v1.2.2";
+        public const string CURRENT_VERSION = "v1.2.3";
         // ══════════════════════════════════════════════════════
 
         private const string BASE_URL = "https://github.com/datnv2k4/Lite/releases/latest/download";
