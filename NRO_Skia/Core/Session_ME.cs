@@ -358,6 +358,8 @@ public class Session_ME : ISession
 	public void doConnect(string host, int port)
 	{
 		sc = new TcpClient();
+        sc.ReceiveTimeout = 60000;
+        sc.SendTimeout = 60000;
         string rawProxy = Account.Proxy; // "ip:port:user:pass"
         if (!string.IsNullOrEmpty(rawProxy) && rawProxy != "None")
         {
@@ -538,13 +540,25 @@ public class Session_ME : ISession
 			{
 				break;
 			}
-			if (message == null)
+			
+			try
 			{
-				recieveMsg.removeElementAt(0);
-				break;
+				if (message != null)
+				{
+					messageHandler.onMessage(message);
+				}
 			}
-			messageHandler.onMessage(message);
-			recieveMsg.removeElementAt(0);
+			catch (Exception ex)
+			{
+				Debug.Log("Error Process Msg: " + ex.Message);
+			}
+			finally
+			{
+				if (recieveMsg.size() > 0 && recieveMsg.elementAt(0) == message)
+				{
+					recieveMsg.removeElementAt(0);
+				}
+			}
 		}
 	}
 
