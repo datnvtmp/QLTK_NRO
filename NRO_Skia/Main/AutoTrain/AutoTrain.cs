@@ -1,4 +1,4 @@
-﻿using Mod;
+using Mod;
 using NRO_Skia.Main.Core;
 using NRO_Skia.Main.CSKB;
 using System;
@@ -382,6 +382,10 @@ namespace NRO_Skia.Main.AutoTrain
                 var targets = new MyVector();
                 targets.addElement(Char.myCharz());
                 Service.gI().sendPlayerAttack(new MyVector(), targets, -1);
+                
+                // Cập nhật mốc thời gian để UI chạy bóng mờ hồi chiêu
+                skill.lastTimeUseThisSkill = Lib.TimeNow();
+                
                 SkillSelector.TimeToBuffHS = Lib.TimeNow();
                 TimeUseBuffHS = Lib.TimeNow();
                 _isWaitingSkill7 = false;

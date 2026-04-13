@@ -86,6 +86,8 @@ public class AutoItemRef
                     Logger.Log("[AutoItem] " + Name + ": idCon=" + IdCon + " có thể sai. Buff đang có: " + GetActiveBuffIconsDebug());
                     _nextDebugTime = now + 15_000L;
                 }
+                
+                _nextUseTime = now + 30_000L;
                 return;
             }
         }
@@ -99,8 +101,8 @@ public class AutoItemRef
             return;
         }
 
-        _verifyIconUntil = now + 4_000L;
-        _nextUseTime = now + ((_iconMappingChecked && !_iconMappingValid) ? 30_000L : 10_000L);
+        _verifyIconUntil = now + 5_000L;
+        _nextUseTime = now + 1_000L;
     }
 
     private static string GetActiveBuffIconsDebug()
