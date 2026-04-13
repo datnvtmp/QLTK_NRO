@@ -462,7 +462,14 @@ public class Mob : IMapObject
         {
             return;
         }
-        
+
+        // --- Dọn dẹp quái ma ngay tức thì (Bỏ qua hoạt cảnh rơi nhảy) ---
+        if ((this.hp <= 0 && this.status != 0) || this.status == 1)
+        {
+            this.status = 1;
+            this.isDie = true;
+        }
+
         // --- Bắt đầu khóa cứng vị trí và trạng thái quái (không cho chạy/nhảy/đánh) ---
         if (status != 1 && status != 0 && status != 6) 
         {
