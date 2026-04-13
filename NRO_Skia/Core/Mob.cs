@@ -462,6 +462,19 @@ public class Mob : IMapObject
         {
             return;
         }
+        
+        // --- Bắt đầu khóa cứng vị trí và trạng thái quái (không cho chạy/nhảy/đánh) ---
+        if (status != 1 && status != 0 && status != 6) 
+        {
+            x = xFirst;
+            y = yFirst;
+            if (status == 3 || status == 4 || status == 5 || status == 7) 
+            {
+                status = 2; // Ép về trạng thái đứng im
+            }
+        }
+        // ----------------------------------------------------------------------------
+        
         GetFrame();
         if (blindEff && GameCanvas.gameTick % 5 == 0)
         {
