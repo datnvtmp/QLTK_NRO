@@ -73,12 +73,7 @@ public class mGraphics
         isTranslate = translateX != 0 || translateY != 0;
     }
 
-    public void translate(float x, float y)
-    {
-        translateXf += x;
-        translateYf += y;
-        isTranslate = translateXf != 0f || translateYf != 0f;
-    }
+
 
     public int getTranslateX() => translateX / zoomLevel;
     public int getTranslateY() => translateY / zoomLevel + addYWhenOpenKeyBoard;
@@ -113,10 +108,6 @@ public class mGraphics
         _a = 1f;
     }
 
-    public void setColor(Color color)
-    {
-        _r = color.r; _g = color.g; _b = color.b; _a = color.a;
-    }
 
     public void setColor(int rgb, float alpha)
     {
@@ -124,19 +115,7 @@ public class mGraphics
         _a = alpha;
     }
 
-    public void setBgColor(int rgb)
-    {
-        currentBGColor = rgb;
-        setColor(rgb);
-    }
 
-    public Color setColorMiniMap(int rgb) =>
-        new Color(((rgb >> 16) & 0xFF) / 256f,
-                  ((rgb >> 8) & 0xFF) / 256f,
-                  (rgb & 0xFF) / 256f);
-
-    public float[] getRGB(Color cl) =>
-        new float[] { cl.r * 256f, cl.g * 256f, cl.b * 256f };
 
     // ─────────────────────────────────────────────
     // PRIMITIVES
@@ -195,18 +174,7 @@ public class mGraphics
     // DRAW STRING
     // x,y là pixel thật (mFont tự tính trước khi gọi)
     // ─────────────────────────────────────────────
-    public void drawString(string s, int x, int y, GUIStyle style)
-    {
-        if (canvas == null) return;
-        _textPaint.Color = style.normal.textColor.ToSKColor();
-        _textPaint.TextSize = 12 * zoomLevel;
-        if (isClip) { canvas.Save(); canvas.ClipRect(GetClipSKRect()); }
-        canvas.DrawText(s, x, y + _textPaint.TextSize, _textPaint);
-        if (isClip) canvas.Restore();
-    }
 
-    public void drawString(string s, int x, int y, GUIStyle style, int w) =>
-        drawString(s, x, y, style);
 
     // ─────────────────────────────────────────────
     // DRAW REGION
@@ -313,58 +281,6 @@ public class mGraphics
     }
 
     // ─────────────────────────────────────────────
-    // drawRegion2 (color blend)
-    // ─────────────────────────────────────────────
-    public void drawRegion2(Image image, float x0, float y0, int w, int h,
-                            int transform, int x, int y, int anchor)
-    {
-        if (canvas == null || image == null) return;
-        var skImage = image.GetSkImage();
-        if (skImage == null) return;
-
-        int dx = x * zoomLevel + translateX;
-        int dy = y * zoomLevel + translateY;
-        int dw = w * zoomLevel;
-        int dh = h * zoomLevel;
-
-        if ((anchor & HCENTER) == HCENTER) dx -= dw / 2;
-        if ((anchor & VCENTER) == VCENTER) dy -= dh / 2;
-        if ((anchor & RIGHT) == RIGHT) dx -= dw;
-        if ((anchor & BOTTOM) == BOTTOM) dy -= dh;
-
-        var src = new SKRect(
-            x0 * zoomLevel,
-            y0 * zoomLevel,
-            (x0 + w) * zoomLevel,
-            (y0 + h) * zoomLevel);
-
-        var dst = new SKRect(dx, dy, dx + dw, dy + dh);
-
-        var blend = image.colorBlend;
-        if (blend.r != 1f || blend.g != 1f || blend.b != 1f)
-        {
-            float[] m = {
-                blend.r, 0, 0, 0, 0,
-                0, blend.g, 0, 0, 0,
-                0, 0, blend.b, 0, 0,
-                0, 0, 0, blend.a, 0
-            };
-            _paint.ColorFilter = SKColorFilter.CreateColorMatrix(m);
-        }
-
-        canvas.Save();
-        if (isClip) canvas.ClipRect(GetClipSKRect());
-        if (transform != 0) ApplyTransform(transform, dx + dw / 2f, dy + dh / 2f);
-        canvas.DrawImage(skImage, src, dst, SKSamplingOptions.Default, _paint);
-        canvas.Restore();
-        _paint.ColorFilter = null;
-    }
-
-    public void drawRegionGui(Image image, float x0, float y0, int w, int h,
-                              int transform, float x, float y, int anchor)
-    { }
-
-    // ─────────────────────────────────────────────
     // DRAW IMAGE helpers
     // ─────────────────────────────────────────────
     public void drawImage(Image image, int x, int y, int anchor)
@@ -385,43 +301,6 @@ public class mGraphics
             drawRegion(image, 0, 0, getImageWidth(image), getImageHeight(image), 0, x, y, anchor);
     }
 
-    public void drawImageFog(Image image, int x, int y, int anchor)
-    {
-        if (image != null)
-            drawRegion(image, 0, 0, image.w / zoomLevel, image.h / zoomLevel, 0, x, y, anchor);
-    }
-
-    public void drawImagaByDrawTexture(Image image, float x, float y)
-    {
-        if (canvas == null || image == null) return;
-        var skImage = image.GetSkImage();
-        if (skImage == null) return;
-        float px = x * zoomLevel + translateX;
-        float py = y * zoomLevel + translateY;
-        canvas.DrawImage(skImage, px, py, _paint);
-    }
-
-    public void drawImageScale(Image image, int x, int y, int w, int h, int transform)
-    {
-        if (canvas == null || image?.bitmap == null) return;
-        int px = x * zoomLevel + translateX;
-        int py = y * zoomLevel + translateY;
-        int pw = w * zoomLevel;
-        int ph = h * zoomLevel;
-        var src = new SKRect(0, 0, image.bitmap.Width, image.bitmap.Height);
-        var dst = new SKRect(px, py, px + pw, py + ph);
-        canvas.Save();
-        if (transform != 0) canvas.Scale(-1, 1, px + pw / 2f, py + ph / 2f);
-        canvas.DrawImage(image.GetSkImage(), src, dst, SKSamplingOptions.Default, _paint);
-        canvas.Restore();
-    }
-
-    public void drawImageSimple(Image image, int x, int y)
-    {
-        if (canvas == null || image?.bitmap == null) return;
-        canvas.DrawImage(image.GetSkImage(), x * zoomLevel, y * zoomLevel, _paint);
-    }
-
     // ─────────────────────────────────────────────
     // TRANSFORM
     // ─────────────────────────────────────────────
@@ -440,68 +319,15 @@ public class mGraphics
     }
 
     // ─────────────────────────────────────────────
-    // GL LINES / FILL TRANS
-    // ─────────────────────────────────────────────
-    public void fillTrans(Image imgTrans, int x, int y, int w, int h)
-    {
-        setColor(0, 0.5f);
-        fillRect(x, y, w, h);
-    }
-
-    public void fillArg(int i, int j, int k, int l, int m, int n) =>
-        fillRect(i, j, k, l);
-
-    public void drawlineGL(MyVector totalLine)
-    {
-        if (canvas == null) return;
-        _paint.Style = SKPaintStyle.Stroke;
-        _paint.StrokeWidth = 1;
-        for (int i = 0; i < totalLine.size(); i++)
-        {
-            mLine line = (mLine)totalLine.elementAt(i);
-            _paint.Color = new SKColor(
-                (byte)(line.r * 255), (byte)(line.g * 255),
-                (byte)(line.b * 255), (byte)(line.a * 255));
-            int x1 = line.x1 * zoomLevel + (isTranslate ? translateX : 0);
-            int y1 = line.y1 * zoomLevel + (isTranslate ? translateY : 0);
-            int x2 = line.x2 * zoomLevel + (isTranslate ? translateX : 0);
-            int y2 = line.y2 * zoomLevel + (isTranslate ? translateY : 0);
-            canvas.DrawLine(x1, y1, x2, y2, _paint);
-        }
-        totalLine.removeAllElements();
-    }
-
-    public void drawLine(mGraphics g, int x, int y, int xTo, int yTo, int nLine, int color)
-    {
-        setColor(color);
-        _paint.StrokeWidth = nLine;
-        drawLine(x, y, xTo, yTo);
-    }
-
-    // ─────────────────────────────────────────────
     // STATIC HELPERS
     // ─────────────────────────────────────────────
     public static int getImageWidth(Image image) => image.getWidth();
     public static int getImageHeight(Image image) => image.getHeight();
-    public static int getRealImageWidth(Image img) => img.w;
-    public static int getRealImageHeight(Image img) => img.h;
-
-    public static bool isNotTranColor(Color color)
-    {
-        if (color.a == 0) return false;
-        return !(color.r == transParentColor.r && color.g == transParentColor.g &&
-                 color.b == transParentColor.b && color.a == transParentColor.a);
-    }
 
     public static Color setColorObj(int rgb) =>
         new Color(((rgb >> 16) & 0xFF) / 256f,
                   ((rgb >> 8) & 0xFF) / 256f,
                   (rgb & 0xFF) / 256f);
-
-    public static int getIntByColor(Color cl) =>
-        (((int)(cl.r * 255) & 0xFF) << 16) |
-        (((int)(cl.g * 255) & 0xFF) << 8) |
-        ((int)(cl.b * 255) & 0xFF);
 
     public static int blendColor(float level, int color, int colorBlend)
     {
@@ -513,30 +339,7 @@ public class mGraphics
         return ((int)nr << 16) | ((int)ng << 8) | (int)nb;
     }
 
-    public static Image blend(Image img0, float level, int rgb)
-    {
-        float tr = ((rgb >> 16) & 0xFF) / 256f;
-        float tg = ((rgb >> 8) & 0xFF) / 256f;
-        float tb = (rgb & 0xFF) / 256f;
-        int w = img0.w, h = img0.h;
-        var result = Image.createImage(w, h);
-        for (int py = 0; py < h; py++)
-            for (int px = 0; px < w; px++)
-            {
-                var c = img0.bitmap.GetPixel(px, py);
-                if (c.Alpha > 0)
-                {
-                    float nr = MathF.Max(0, MathF.Min(1, (tr - c.Red / 255f) * level + c.Red / 255f));
-                    float ng = MathF.Max(0, MathF.Min(1, (tg - c.Green / 255f) * level + c.Green / 255f));
-                    float nb = MathF.Max(0, MathF.Min(1, (tb - c.Blue / 255f) * level + c.Blue / 255f));
-                    result.bitmap.SetPixel(px, py, new SKColor(
-                        (byte)(nr * 255), (byte)(ng * 255), (byte)(nb * 255), c.Alpha));
-                }
-            }
-        Cout.LogError2("BLEND");
-        return result;
-    }
-
+    
     // ─────────────────────────────────────────────
     // RESET
     // ─────────────────────────────────────────────
@@ -550,18 +353,6 @@ public class mGraphics
         translateYf = 0;
     }
 
-    public Rect intersectRect(Rect r1, Rect r2)
-    {
-        float x = MathF.Max(r1.x, r2.x);
-        float y = MathF.Max(r1.y, r2.y);
-        float xMax = MathF.Min(r1.xMax, r2.xMax);
-        float yMax = MathF.Min(r1.yMax, r2.yMax);
-        return new Rect(x, y, xMax - x, yMax - y);
-    }
-
-    public void CreateLineMaterial() { }
-
-    private void UpdatePos(int anchor) { }
 
     internal void drawRegion(Small img, int p1, int p2, int p3, int p4,
                              int transform, int x, int y, int anchor)

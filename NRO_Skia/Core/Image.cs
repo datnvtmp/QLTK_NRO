@@ -26,10 +26,6 @@ public class Image : IDisposable
 		}
 	}
 
-	~Image()
-	{
-		Dispose();
-	}
 
 	private void TrackNativeMemory()
 	{
@@ -62,7 +58,6 @@ public class Image : IDisposable
 	public static int status;
 	public Color colorBlend = Color.black;
 
-	public static Image createEmptyImage() => new Image();
 
 	public static Image createImage(string filename)
 	{
@@ -107,33 +102,6 @@ public class Image : IDisposable
 		}
 	}
 
-	public static Image createImage(Image src, int x, int y, int w, int h, int transform)
-	{
-		if (src?.bitmap == null) return null;
-		var newBmp = new SKBitmap(w, h);
-		using (var canvas = new SKCanvas(newBmp))
-		{
-			if (transform == 2)
-			{
-				canvas.Translate(w, 0);
-				canvas.Scale(-1, 1);
-			}
-			canvas.DrawImage(src.GetSkImage(), new SKRect(x, y, x + w, y + h), new SKRect(0, 0, w, h), SKSamplingOptions.Default);
-		}
-		return new Image { bitmap = newBmp, w = w, h = h }.WithTracking();
-	}
-
-	public static Image createImage(int w, int h)
-	{
-		return new Image { bitmap = new SKBitmap(w, h), w = w, h = h }.WithTracking();
-	}
-
-	public static Image createImage(Image src)
-	{
-		if (src?.bitmap == null) return null;
-		return new Image { bitmap = src.bitmap.Copy(), w = src.w, h = src.h }.WithTracking();
-	}
-
 	public static Image createImage(sbyte[] imageData, int offset, int lenght)
 	{
 		if (offset + lenght > imageData.Length) return null;
@@ -147,14 +115,6 @@ public class Image : IDisposable
 	{
 		if (var > 0) return (byte)var;
 		return (byte)(var + 256);
-	}
-
-	public static byte[] convertArrSbyteToArrByte(sbyte[] var)
-	{
-		byte[] array = new byte[var.Length];
-		for (int i = 0; i < var.Length; i++)
-			array[i] = var[i] > 0 ? (byte)var[i] : (byte)(var[i] + 256);
-		return array;
 	}
 
     public static Image createRGBImage(int[] rgb, int w, int h, bool bl)
@@ -174,43 +134,7 @@ public class Image : IDisposable
         return new Image { bitmap = bmp, w = w, h = h }.WithTracking();
     }
 
-    private static SKColor skColorFromRGB(int rgb)
-	{
-		byte b = (byte)(rgb & 0xFF);
-		byte g = (byte)((rgb >> 8) & 0xFF);
-		byte r = (byte)((rgb >> 16) & 0xFF);
-		byte a = (byte)((rgb >> 24) & 0xFF);
-		if (a == 0) a = 255;
-		return new SKColor(r, g, b, a);
-	}
-
-	public static Color setColorFromRBG(int rgb)
-	{
-		int b = rgb & 0xFF;
-		int g = (rgb >> 8) & 0xFF;
-		int r = (rgb >> 16) & 0xFF;
-		return new Color(r / 255f, g / 255f, b / 255f);
-	}
-
 	public static void update() { }
-
-	public static byte[] loadData(string filename)
-	{
-		try
-		{
-			return File.ReadAllBytes(filename);
-		}
-		catch (Exception e)
-		{
-			throw new Exception("NULL POINTER EXCEPTION AT Image loadData " + filename, e);
-		}
-	}
-
-	public static Image __createImage(int w, int h) => createImage(w, h);
-
-	public static int getImageWidth(Image image) => image.getWidth();
-	public static int getImageHeight(Image image) => image.getHeight();
-
 	public SKImage GetSkImage()
 	{
 		if (_disposed || bitmap == null)
@@ -226,18 +150,6 @@ public class Image : IDisposable
 
 	public int getWidth() => w / mGraphics.zoomLevel;
 	public int getHeight() => h / mGraphics.zoomLevel;
-
-	public Color[] getColor()
-	{
-		var pixels = new Color[w * h];
-		for (int py = 0; py < h; py++)
-			for (int px = 0; px < w; px++)
-			{
-				var c = bitmap.GetPixel(px, py);
-				pixels[py * w + px] = new Color(c.Red / 255f, c.Green / 255f, c.Blue / 255f, c.Alpha / 255f);
-			}
-		return pixels;
-	}
 
 	public object texture
 	{
@@ -260,20 +172,5 @@ public class Image : IDisposable
 				_disposed = true;
 			}
 		}
-	}
-
-	public int getRealImageWidth() => w;
-	public int getRealImageHeight() => h;
-
-	public void getRGB(ref int[] data, int x1, int x2, int x, int y, int w, int h)
-	{
-		for (int j = 0; j < h; j++)
-			for (int i = 0; i < w; i++)
-			{
-				var c = bitmap.GetPixel(x + i, y + j);
-				int idx = j * w + i;
-				if (idx < data.Length)
-					data[idx] = (c.Alpha << 24) | (c.Red << 16) | (c.Green << 8) | c.Blue;
-			}
 	}
 }
