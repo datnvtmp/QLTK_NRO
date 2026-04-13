@@ -255,11 +255,12 @@ public class SmallImage
 
 	public static void update()
 	{
-		int num = 0;
-		if (GameCanvas.gameTick % 1000 != 0)
+		// Chạy mỗi 500 tick thay vì 1000 — dọn rác thường xuyên hơn
+		if (GameCanvas.gameTick % 500 != 0)
 		{
 			return;
 		}
+		int num = 0;
 		for (int i = 0; i < imgNew.Length; i++)
 		{
 			if (imgNew[i] != null)
@@ -269,14 +270,21 @@ public class SmallImage
 				smallCount++;
 			}
 		}
+		// Nếu quá nhiều ảnh, giải phóng riêng từng ảnh không dùng
+		// thay vì nuke toàn bộ mảng (tránh lag spike khi load lại)
 		if (num > 150)
 		{
 			for (int j = 0; j < imgNew.Length; j++)
 			{
-				if (imgNew[j] != null && imgNew[j].img != null && imgNew[j].img != imgEmpty)
-					imgNew[j].img.Dispose();
+				if (imgNew[j] != null
+					&& imgNew[j].timeUpdate - imgNew[j].timePaint > 1
+					&& !Char.myCharz().isCharBodyImageID(j))
+				{
+					if (imgNew[j].img != null && imgNew[j].img != imgEmpty)
+						imgNew[j].img.Dispose();
+					imgNew[j] = null;
+				}
 			}
-			imgNew = new Small[maxSmall];
 			mSystem.gcc();
 		}
 	}

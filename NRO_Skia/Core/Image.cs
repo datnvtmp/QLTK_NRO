@@ -137,13 +137,14 @@ public class Image : IDisposable
 	public static void update() { }
 	public SKImage GetSkImage()
 	{
-		if (_disposed || bitmap == null)
-		{
-			return null;
-		}
+		if (_disposed) return null;
 		if (skImage == null)
 		{
+			if (bitmap == null) return null;
 			skImage = SKImage.FromBitmap(bitmap);
+			// Giải phóng bitmap vì đã copy sang SKImage rồi — tránh nhân đôi RAM
+			bitmap.Dispose();
+			bitmap = null;
 		}
 		return skImage;
 	}

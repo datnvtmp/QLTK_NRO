@@ -36,7 +36,7 @@ public class mGraphics
     public const int TRANS_ROT270 = 6;
     public const int TRANS_ROT90 = 5;
 
-    public static Hashtable cachedTextures = new Hashtable();
+    // (cachedTextures removed — was dead code, never used)
     public static int addYWhenOpenKeyBoard;
 
     private int clipTX, clipTY;

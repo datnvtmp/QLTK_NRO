@@ -55,6 +55,13 @@ public class BgItem
 
 	public static void clearHashTable()
 	{
+		// Dispose tất cả Image trước khi xóa — tránh leak native memory
+		var enumerator = imgNew.GetEnumerator();
+		while (enumerator.MoveNext())
+		{
+			(enumerator.Value as Image)?.Dispose();
+		}
+		imgNew.clear();
 	}
 
 	public static bool isExistKeyNews(string keyNew)

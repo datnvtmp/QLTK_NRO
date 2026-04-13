@@ -346,10 +346,10 @@ public class mFont
                 int y2 = fImages[idx][1];
                 int w = fImages[idx][2];
                 int h = fImages[idx][3];
-                if (y2 + h > imgFont.bitmap.Height)
+                if (y2 + h > imgFont.h)
                 {
-                    y2 -= imgFont.bitmap.Height;
-                    x2 = imgFont.bitmap.Width / 2;
+                    y2 -= imgFont.h;
+                    x2 = imgFont.w / 2;
                 }
                 g.drawRegion(imgFont, x2, y2, w, h, 0, cur, y, 20);
             }
@@ -376,10 +376,10 @@ public class mFont
                 int y2 = fImages[idx][1];
                 int w = fImages[idx][2];
                 int h = fImages[idx][3];
-                if (y2 + h > imgFont.bitmap.Height)
+                if (y2 + h > imgFont.h)
                 {
-                    y2 -= imgFont.bitmap.Height;
-                    x2 = imgFont.bitmap.Width / 2;
+                    y2 -= imgFont.h;
+                    x2 = imgFont.w / 2;
                 }
                 g.drawRegion(imgFont, x2, y2, w, h, 0, cur, y, 20);
             }

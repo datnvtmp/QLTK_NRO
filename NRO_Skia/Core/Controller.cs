@@ -2651,6 +2651,10 @@ public class Controller : IMessageHandler
                             if (num156 == 3896)
                             {
                             }
+                            // Dispose ảnh cũ trước khi gán mới — tránh leak native memory
+                            var oldSmallImg = SmallImage.imgNew[num156]?.img;
+                            if (oldSmallImg != null && oldSmallImg != SmallImage.imgEmpty)
+                                oldSmallImg.Dispose();
                             SmallImage.imgNew[num156].img = createImage(array17);
                         }
                         catch (Exception)
@@ -2696,11 +2700,16 @@ public class Controller : IMessageHandler
                                 array11[num141] = msg.reader().readByte();
                             }
                             image = Image.createImage(array11, 0, num140);
+                            // Dispose ảnh BgItem cũ trước khi ghi đè — tránh leak
+                            var oldBgImg = BgItem.imgNew.get(num139 + string.Empty) as Image;
+                            oldBgImg?.Dispose();
                             BgItem.imgNew.put(num139 + string.Empty, image);
                         }
                         catch (Exception)
                         {
                             array11 = null;
+                            var oldBgImg2 = BgItem.imgNew.get(num139 + string.Empty) as Image;
+                            oldBgImg2?.Dispose();
                             BgItem.imgNew.put(num139 + string.Empty, Image.createRGBImage(new int[1], 1, 1, bl: true));
                         }
                         if (array11 != null)
