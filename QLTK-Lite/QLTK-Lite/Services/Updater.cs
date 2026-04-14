@@ -11,7 +11,7 @@ namespace QLTK_Lite
         // ══════════════════════════════════════════════════════
         // ĐỔI DÒNG NÀY MỖI LẦN RELEASE (khớp với tag trên GitHub)
         // ══════════════════════════════════════════════════════
-        public const string CURRENT_VERSION = "v1.2.3";
+        public const string CURRENT_VERSION = "v1.2.4";
         // ══════════════════════════════════════════════════════
 
         private const string BASE_URL = "https://github.com/datnv2k4/Lite/releases/latest/download";
@@ -22,6 +22,10 @@ namespace QLTK_Lite
         public static string LatestVersion { get; private set; } = "";
 
         private static ProgressForm? _progressForm;
+        private static System.Threading.Timer? _checkTimer;
+        private static Form? _notifyOwner;
+        private static string _lastNotifiedVersion = "";
+        private static readonly object _notifyLock = new object();
 
         /// <summary>
         /// Gọi trong Main() trước Application.Run().
@@ -33,30 +37,8 @@ namespace QLTK_Lite
             {
                 using var http = CreateHttpClient();
 
-                // ── 1. Lấy version mới nhất từ GitHub API ────
-                // ── 1. Lấy version mới nhất từ GitHub API ────
-                try
-                {
-                    var json = http.GetStringAsync(API_URL).Result;
-                    LatestVersion = Regex.Match(json, "\"tag_name\":\"([^\"]+)\"").Groups[1].Value;
-                    if (string.IsNullOrEmpty(LatestVersion)) return false;
-
-                    // Chuyển đổi chuỗi "v1.0.x" thành đối tượng Version để so sánh (bỏ chữ 'v')
-                    Version vCurrent = new Version(CURRENT_VERSION.TrimStart('v'));
-                    Version vLatest = new Version(LatestVersion.TrimStart('v'));
-
-                    // LOGIC ĐÚNG: Chỉ cập nhật nếu bản trên Server LỚN HƠN bản máy
-                    if (vLatest <= vCurrent)
-                    {
-                        return false;
-                    }
-                }
-                catch
-                {
-                    return false;
-                }
-
-                if (LatestVersion == CURRENT_VERSION) return false;
+                if (!TryGetLatestVersion(http, out var latestVersion)) return false;
+                LatestVersion = latestVersion;
 
                 // ── 2. Đánh dấu có update ─────────────────────
                 HasNewVersion = true;
@@ -130,6 +112,17 @@ namespace QLTK_Lite
             }
         }
 
+        public static void StartPeriodicUpdateCheck(Form owner)
+        {
+            if (_checkTimer != null) return;
+            _notifyOwner = owner;
+            _checkTimer = new System.Threading.Timer(
+                _ => CheckForUpdateAndNotify(),
+                null,
+                TimeSpan.FromHours(1),
+                TimeSpan.FromHours(1));
+        }
+
         // ══════════════════════════════════════════════════════
         // HELPERS
         // ══════════════════════════════════════════════════════
@@ -140,6 +133,66 @@ namespace QLTK_Lite
             client.Timeout = TimeSpan.FromMinutes(5);
             client.DefaultRequestHeaders.Add("User-Agent", "QLTK-Updater");
             return client;
+        }
+
+        private static bool TryGetLatestVersion(HttpClient http, out string latestVersion)
+        {
+            latestVersion = "";
+            try
+            {
+                var json = http.GetStringAsync(API_URL).Result;
+                var serverVersion = Regex.Match(json, "\"tag_name\":\"([^\"]+)\"").Groups[1].Value;
+                if (string.IsNullOrEmpty(serverVersion)) return false;
+
+                var vCurrent = new Version(CURRENT_VERSION.TrimStart('v'));
+                var vLatest = new Version(serverVersion.TrimStart('v'));
+                if (vLatest <= vCurrent) return false;
+
+                latestVersion = serverVersion;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static void CheckForUpdateAndNotify()
+        {
+            try
+            {
+                using var http = CreateHttpClient();
+                if (!TryGetLatestVersion(http, out var latestVersion)) return;
+
+                lock (_notifyLock)
+                {
+                    if (_lastNotifiedVersion == latestVersion) return;
+                    _lastNotifiedVersion = latestVersion;
+                }
+
+                HasNewVersion = true;
+                LatestVersion = latestVersion;
+
+                NotifyNewVersion(latestVersion);
+            }
+            catch
+            {
+            }
+        }
+
+        private static void NotifyNewVersion(string latestVersion)
+        {
+            void UpdateTitle()
+            {
+                if (_notifyOwner == null || _notifyOwner.IsDisposed) return;
+                _notifyOwner.Text = $"QLTK {CURRENT_VERSION} — 🔔 Có phiên bản mới {latestVersion}!";
+            }
+
+            if (_notifyOwner != null && !_notifyOwner.IsDisposed && _notifyOwner.IsHandleCreated)
+            {
+                _notifyOwner.BeginInvoke((MethodInvoker)UpdateTitle);
+                return;
+            }
         }
 
         private static void DownloadFile(HttpClient http, string url, string savePath)

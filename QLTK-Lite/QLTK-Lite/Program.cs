@@ -22,7 +22,9 @@ namespace QLTK_Lite
             Application.SetCompatibleTextRenderingDefault(false);
             if (!await License.CheckAsync()) return;
             if (Updater.CheckAndUpdate()) return;
-            Application.Run(new Form1());
+            var mainForm = new Form1();
+            Updater.StartPeriodicUpdateCheck(mainForm);
+            Application.Run(mainForm);
         }
     }
 }
