@@ -19,6 +19,7 @@ public class AutoItemRef
     private bool _iconMappingChecked = false;
     private bool _iconMappingValid = true;
     private long _nextDebugTime = 0;
+    private bool _hadActiveBuff = false;
 
     public AutoItemRef(string name, int id, int idCon)
     {
@@ -63,8 +64,20 @@ public class AutoItemRef
                 }
                 _iconMappingChecked = true;
                 _iconMappingValid = true;
+                _hadActiveBuff = true;
                 _verifyIconUntil = 0;
                 _nextUseTime = now + timeLeft * 1000L;
+                return;
+            }
+
+            // Buff vừa hết → đợi cooldown trước khi dùng lại
+            if (_hadActiveBuff)
+            {
+                _hadActiveBuff = false;
+                long cooldown = IdCon == 379 ? 90_000L : 30_000L;
+                _nextUseTime = now + cooldown;
+                GameScr.info1?.addInfo($"|2|{Name}: buff hết, đợi {cooldown / 1000}s...");
+                Logger.Log("[AutoItem] " + Name + ": buff hết, đợi " + (cooldown / 1000) + "s trước khi dùng lại");
                 return;
             }
 
@@ -86,7 +99,7 @@ public class AutoItemRef
                     Logger.Log("[AutoItem] " + Name + ": idCon=" + IdCon + " có thể sai. Buff đang có: " + GetActiveBuffIconsDebug());
                     _nextDebugTime = now + 15_000L;
                 }
-                
+
                 _nextUseTime = now + 30_000L;
                 return;
             }
