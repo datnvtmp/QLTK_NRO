@@ -1788,8 +1788,9 @@ public class GameCanvas : IActionListener
             }
             AutoManager.PaintScr(g);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            NRO_Skia.Program.LogCrash(ex);
         }
     }
 

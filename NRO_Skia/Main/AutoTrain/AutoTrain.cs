@@ -178,7 +178,7 @@ namespace NRO_Skia.Main.AutoTrain
             if (MainXmap.isXmaping) return;
             if (AutoBossNapa.IsRunning) return;
             if (AutoBuyBua.IsRunning) return;
-            if (AutoCSKB.IsRunning) return; 
+            if (AutoCSKB.IsRunning) return;
 
 
             var me = Char.myCharz();
@@ -188,7 +188,7 @@ namespace NRO_Skia.Main.AutoTrain
             if (IsBuyingTDLT) { HandleBuyingTDLT(); return; }
             if (IsAutoBuyTDLT && ShouldBuyTDLT()) { StartBuyTDLT(); return; }
 
-            if (Char.myCharz().cStamina < GameConstants.MIN_STAMINA) UseStaminaItem();
+            if (Char.myCharz().cStamina < GameConstants.MIN_STAMINA){ UseStaminaItem(); return; }
 
             if (TargetMapId != TileMap.mapID && !IsUpMapPrivate)
             {
@@ -382,10 +382,10 @@ namespace NRO_Skia.Main.AutoTrain
                 var targets = new MyVector();
                 targets.addElement(Char.myCharz());
                 Service.gI().sendPlayerAttack(new MyVector(), targets, -1);
-                
+
                 // Cập nhật mốc thời gian để UI chạy bóng mờ hồi chiêu
                 skill.lastTimeUseThisSkill = Lib.TimeNow();
-                
+
                 SkillSelector.TimeToBuffHS = Lib.TimeNow();
                 TimeUseBuffHS = Lib.TimeNow();
                 _isWaitingSkill7 = false;
@@ -482,8 +482,12 @@ namespace NRO_Skia.Main.AutoTrain
                 return;
             }
 
-            int ngocK = int.Parse(Char.myCharz().luongKhoaStr);
-            int ngoc = int.Parse(Char.myCharz().luongStr);
+            int.TryParse(Char.myCharz().luongKhoaStr, out int ngocK);
+            int.TryParse(Char.myCharz().luongStr, out int ngoc);
+            
+            // Ưu tiên dùng biến int nếu parse chuỗi thất bại
+            if (ngocK == 0) ngocK = Char.myCharz().luongKhoa;
+            if (ngoc == 0) ngoc = Char.myCharz().luong;
 
             if (ngocK < 4 && ngoc < 4)
             {

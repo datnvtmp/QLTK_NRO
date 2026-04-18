@@ -86,10 +86,16 @@ static class Program
         }
     }
 
-    static void LogCrash(object? ex)
+    private static long _lastLogTime;
+
+    internal static void LogCrash(object? ex)
     {
         try
         {
+            long now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (now - _lastLogTime < 1000) return; // Cooldown 1s để tránh treo UI do ghi file quá nhiều
+            _lastLogTime = now;
+
             string msg = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] CRASH REPORT:\n{ex}\n\n";
             File.AppendAllText("crash.log", msg);
             Console.WriteLine("CRASH! Log updated in crash.log");

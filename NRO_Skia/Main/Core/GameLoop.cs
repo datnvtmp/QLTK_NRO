@@ -85,6 +85,7 @@ public class GameLoop : IDisposable
         catch (Exception ex)
         {
             Console.WriteLine($"[Update ERROR] {ex.GetType().Name}: {ex.Message}");
+            NRO_Skia.Program.LogCrash(ex);
         }
     }
 
@@ -118,6 +119,7 @@ public class GameLoop : IDisposable
         catch (Exception ex)
         {
             Console.WriteLine($"[Paint ERROR] {ex.GetType().Name}: {ex.Message}");
+            NRO_Skia.Program.LogCrash(ex);
         }
     }
 

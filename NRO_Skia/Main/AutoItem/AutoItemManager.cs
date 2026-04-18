@@ -74,7 +74,7 @@ public class AutoItemRef
             if (_hadActiveBuff)
             {
                 _hadActiveBuff = false;
-                long cooldown = IdCon == 379 ? 90_000L : 30_000L;
+                long cooldown = IdCon == 2758 ? 90_000L : 30_000L;
                 _nextUseTime = now + cooldown;
                 GameScr.info1?.addInfo($"|2|{Name}: buff hết, đợi {cooldown / 1000}s...");
                 Logger.Log("[AutoItem] " + Name + ": buff hết, đợi " + (cooldown / 1000) + "s trước khi dùng lại");

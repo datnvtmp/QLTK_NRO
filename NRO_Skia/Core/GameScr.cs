@@ -4922,8 +4922,9 @@ public class GameScr : mScreen, IChatable
             }
             updateChatVip();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            NRO_Skia.Program.LogCrash(ex);
         }
         int num4 = GameCanvas.gameTick % 4000;
         if (num4 == 1000)
@@ -5133,8 +5134,9 @@ public class GameScr : mScreen, IChatable
             {
                 obj3 = (Char)vCharInMap.elementAt(i);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                NRO_Skia.Program.LogCrash(ex);
             }
             if (obj3 != null && (!GameCanvas.panel.isShow || !GameCanvas.panel.isTypeShop()))
             {
@@ -5195,8 +5197,9 @@ public class GameScr : mScreen, IChatable
             {
                 obj5 = (Char)vCharInMap.elementAt(i);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                NRO_Skia.Program.LogCrash(ex);
             }
             if (obj5 != null && obj5.chatInfo != null)
             {
@@ -5473,8 +5476,9 @@ public class GameScr : mScreen, IChatable
             {
                 paint_CT(g, num12 + GameCanvas.w / 2, 0, num13);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                NRO_Skia.Program.LogCrash(ex);
             }
         }
         if (TileMap.mapID == 172)
